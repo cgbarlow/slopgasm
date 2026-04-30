@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>slopgasm</title>
+<style>
+  :root {
+    --bg: #0e0b14;
+    --panel: #171221;
+    --panel-2: #1f1830;
+    --text: #f3eefb;
+    --muted: #a89db8;
+    --accent: #ff4fa3;
+    --accent-2: #7b5cff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(1200px 800px at 10% -10%, #2a1140 0%, transparent 60%),
+      radial-gradient(900px 700px at 110% 10%, #3a0e54 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 140px;
+  }
+  header { text-align: center; }
+  h1 {
+    font-size: 44px;
+    margin: 8px 0 4px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .blurb {
+    color: var(--muted);
+    line-height: 1.55;
+    margin: 16px auto 24px;
+    max-width: 520px;
+    text-align: center;
+    font-size: 15px;
+  }
+  .blurb a {
+    color: var(--text);
+    border-bottom: 1px solid var(--accent);
+    text-decoration: none;
+  }
+  .cover-wrap {
+    margin: 16px auto 28px;
+    width: 100%;
+    max-width: 420px;
+    aspect-ratio: 1 / 1;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px -20px rgba(123, 92, 255, 0.45),
+                0 10px 30px -10px rgba(255, 79, 163, 0.35);
+  }
+  .cover-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  ul.tracks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .track {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease, border-color 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .track:hover { background: var(--panel-2); }
+  .track:active { transform: scale(0.995); }
+  .track.playing {
+    background: linear-gradient(135deg, rgba(255,79,163,0.18), rgba(123,92,255,0.18));
+    border-color: rgba(255,79,163,0.45);
+  }
+  .play-btn {
+    flex: none;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    color: white;
+    box-shadow: 0 8px 24px -10px rgba(255, 79, 163, 0.6);
+  }
+  .play-btn svg { width: 18px; height: 18px; }
+  .meta { flex: 1; min-width: 0; }
+  .title {
+    font-weight: 600;
+    font-size: 16px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .download {
+    flex: none;
+    color: var(--muted);
+    width: 38px; height: 38px;
+    display: grid; place-items: center;
+    border-radius: 10px;
+    text-decoration: none;
+  }
+  .download:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .download svg { width: 18px; height: 18px; }
+
+  footer {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: rgba(14, 11, 20, 0.85);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    display: none;
+  }
+  footer.visible { display: block; }
+  footer .row { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  footer .now {
+    flex: 1; min-width: 0;
+    font-size: 14px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--muted);
+  }
+  footer .now strong { color: var(--text); font-weight: 600; }
+  audio { width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="cover-wrap"><img src="Cover.PNG" alt="slopgasm cover art" /></div>
+    <h1>slopgasm</h1>
+    <p class="blurb">
+      Shamelessly slopped out during my 15 minute train journey this morning.<br /><br />
+      Tunes: <a href="https://suno.com" target="_blank" rel="noopener">Suno</a><br />
+      Graphics: Nano banana<br />
+      Code: Claude
+    </p>
+  </header>
+
+  <ul class="tracks" id="tracks"></ul>
+</main>
+
+<footer id="player">
+  <div class="row">
+    <div class="now" id="nowPlaying">Nothing playing</div>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <audio id="audio" controls preload="none"></audio>
+  </div>
+</footer>
+
+<script>
+  const tracks = [
+    { file: "slopgasm_concrete-synapse.mp3",   title: "Concrete Synapse" },
+    { file: "slopgasm_mellotron-milkshake.mp3", title: "Mellotron Milkshake" },
+    { file: "slopgasm_raglan-roasted.mp3",     title: "Raglan Roasted" },
+    { file: "slopgasm_space-cows.mp3",         title: "Space Cows" }
+  ];
+
+  const playSvg = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72c0 .79.87 1.27 1.54.84l10.74-6.86a1 1 0 0 0 0-1.68L9.54 4.3A1 1 0 0 0 8 5.14z"/></svg>';
+  const pauseSvg = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+  const downloadSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>';
+
+  const list = document.getElementById('tracks');
+  const audio = document.getElementById('audio');
+  const player = document.getElementById('player');
+  const nowPlaying = document.getElementById('nowPlaying');
+
+  let currentIndex = -1;
+
+  tracks.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.className = 'track';
+    li.dataset.index = i;
+    li.innerHTML = `
+      <div class="play-btn" aria-hidden="true">${playSvg}</div>
+      <div class="meta">
+        <div class="title">${t.title}</div>
+        <div class="sub">slopgasm</div>
+      </div>
+      <a class="download" href="${t.file}" download title="Download ${t.title}" aria-label="Download ${t.title}">${downloadSvg}</a>
+    `;
+    li.addEventListener('click', (e) => {
+      if (e.target.closest('.download')) return;
+      toggle(i);
+    });
+    list.appendChild(li);
+  });
+
+  function toggle(i) {
+    if (currentIndex === i) {
+      if (audio.paused) audio.play(); else audio.pause();
+      return;
+    }
+    currentIndex = i;
+    audio.src = tracks[i].file;
+    audio.play();
+    nowPlaying.innerHTML = `Now playing: <strong>${tracks[i].title}</strong>`;
+    player.classList.add('visible');
+  }
+
+  function refreshIcons() {
+    document.querySelectorAll('.track').forEach((el, i) => {
+      const btn = el.querySelector('.play-btn');
+      const isCurrent = i === currentIndex;
+      const isPlaying = isCurrent && !audio.paused;
+      btn.innerHTML = isPlaying ? pauseSvg : playSvg;
+      el.classList.toggle('playing', isCurrent);
+    });
+  }
+
+  audio.addEventListener('play', refreshIcons);
+  audio.addEventListener('pause', refreshIcons);
+  audio.addEventListener('ended', () => {
+    const next = currentIndex + 1;
+    if (next < tracks.length) toggle(next); else refreshIcons();
+  });
+</script>
+</body>
+</html>
